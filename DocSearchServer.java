@@ -33,10 +33,39 @@ class FileHelpers {
 class Handler implements URLHandler {
     List<File> files;
     Handler(String directory) throws IOException {
-      this.files = FileHelpers.getFiles(Paths.get(directory));
+        this.files = FileHelpers.getFiles(Paths.get(directory));
     }
     public String handleRequest(URI url) throws IOException {
-      return "Don't know how to handle that path!";
+        if (url.getPath().equals("/")) {
+            List<File> files = FileHelpers.getFiles(Paths.get(System.getProperty("user.dir") + "/technical"));
+            return String.format("There are %d files to search", files.size());
+        } else if (url.getPath().contains("search")) {
+            String[] parameters = url.getQuery().split("=");
+
+            if (parameters[0].equals("q")) {
+                String searchTerm = "";
+                if (parameters.length != 1) {
+                    searchTerm = parameters[1];
+                }
+
+                List<File> files = FileHelpers.getFiles(Paths.get(System.getProperty("user.dir") + "/technical"));
+                List<File> matching_files = new ArrayList<File>();
+                for (File file: files) {
+                    String contents = FileHelpers.readFile(file);
+                    if (contents.contains(searchTerm)) {
+                        matching_files.add(file);
+                    }
+                }
+
+                String output = String.format("There were %d files found", matching_files.size());
+                for (File file: matching_files) {
+                    output += "\n" + file.toPath();
+                }
+
+                return output;
+            }
+        }
+        return "I cannot recognize your input, please modify it!";
     }
 }
 
